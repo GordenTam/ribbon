@@ -80,6 +80,7 @@ public class PollingServerListUpdater implements ServerListUpdater {
                 }
             };
 
+            // 使用ScheduledThreadPoolExecutor执行定时任务，定期执行updateAction.doUpdate();更新服务实例在初始化之后1s执行,每30s执行一次
             scheduledFuture = getRefreshExecutor().scheduleWithFixedDelay(
                     wrapperRunnable,
                     initialDelayMs,

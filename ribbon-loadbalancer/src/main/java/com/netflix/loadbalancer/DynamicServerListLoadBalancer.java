@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author stonse
  * 
  */
+//提供了服务实例清单运行时动态更新的能力
 public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBalancer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicServerListLoadBalancer.class);
 
@@ -62,6 +63,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         }
     };
 
+    //serverList更新器,默认使用PollingServerListUpdater,其中有一个ScheduleThreadPool，用于开启定时任务, 定时updateListOfServers()
     protected volatile ServerListUpdater serverListUpdater;
 
     public DynamicServerListLoadBalancer() {
@@ -138,6 +140,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         boolean primeConnection = this.isEnablePrimingConnections();
         // turn this off to avoid duplicated asynchronous priming done in BaseLoadBalancer.setServerList()
         this.setEnablePrimingConnections(false);
+        // 这里调用ServerListUpdater.start(),开始定时任务
         enableAndInitLearnNewServersFeature();
 
         updateListOfServers();
@@ -236,6 +239,8 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();
         if (serverListImpl != null) {
+            // 每隔30s就会执行一次这个函数
+            // serverListImpl在eureka整合ribbon的autoConfig中配置
             servers = serverListImpl.getUpdatedListOfServers();
             LOGGER.debug("List of Servers for {} obtained from Discovery client: {}",
                     getIdentifier(), servers);

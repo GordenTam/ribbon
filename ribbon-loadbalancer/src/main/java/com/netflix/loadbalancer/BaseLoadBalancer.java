@@ -62,6 +62,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     private static Logger logger = LoggerFactory.getLogger(BaseLoadBalancer.class);
 
     private final static IRule DEFAULT_RULE = new RoundRobinRule();
+    // ping策略,默认使用自定义的内部类SerialPingStrategy
     private final static SerialPingStrategy DEFAULT_PING_STRATEGY = new SerialPingStrategy();
     private static final String DEFAULT_NAME = "default";
     private static final String PREFIX = "LoadBalancer_";
@@ -272,6 +273,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
         lbTimer = new ShutdownEnabledTimer("NFLoadBalancer-PingTimer-" + name,
                 true);
+        //使用timer开启定时器,每10s执行一次ping任务
         lbTimer.schedule(new PingTask(), 0, pingIntervalSeconds * 1000);
         forceQuickPing();
     }
@@ -656,6 +658,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
 
         public void runPinger() throws Exception {
+            //
             if (!pingInProgress.compareAndSet(false, true)) { 
                 return; // Ping in progress - nothing to do
             }
@@ -673,6 +676,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                  * The readLock should be free unless an addServer operation is
                  * going on...
                  */
+                //为何使用读写锁
                 allLock = allServerLock.readLock();
                 allLock.lock();
                 allServers = allServerList.toArray(new Server[allServerList.size()]);
@@ -689,6 +693,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                     Server svr = allServers[i];
                     boolean oldIsAlive = svr.isAlive();
 
+                    //改变ping之后的结果
                     svr.setAlive(isAlive);
 
                     if (oldIsAlive != isAlive) {
@@ -884,6 +889,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
      * serially, which may not be desirable, if your <c>IPing</c>
      * implementation is slow, or you have large number of servers.
      */
+    //线性ping server
     private static class SerialPingStrategy implements IPingStrategy {
 
         @Override

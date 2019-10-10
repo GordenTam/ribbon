@@ -144,6 +144,7 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
     }
 
     @Override
+    //通过eureka的discorvery机制发现server
     public List<DiscoveryEnabledServer> getUpdatedListOfServers(){
         return obtainServersViaDiscovery();
     }
